@@ -9,6 +9,7 @@ import CostToggle from "@/components/results/CostToggle";
 import BudgetWarning from "@/components/results/BudgetWarning";
 import MealDetailModal from "@/components/results/MealDetailModal";
 import ShoppingSidebar from "@/components/results/ShoppingSidebar";
+import NutritionChart from "@/components/results/NutritionChart";
 import Link from "next/link";
 
 function ResultsContent() {
@@ -121,6 +122,9 @@ function ResultsContent() {
           onSwap={swapMeal}
           onMealClick={setSelectedSlot}
         />
+
+        {/* Nutrition dashboard */}
+        <NutritionChart slots={plan.slots} />
       </div>
 
       {/* Modal */}
