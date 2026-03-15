@@ -171,7 +171,7 @@ async function runIngredientAgent(
     .join("\n");
 
   const response = await client.responses.create({
-    model: process.env.OPENAI_WORKFLOW_MODEL || "gpt-4.1-mini",
+    model: process.env.OPENAI_WORKFLOW_MODEL || "gpt-5-mini",
     input: [
       {
         role: "system",
@@ -216,7 +216,7 @@ async function runWeeklyPlanAgent(
         : "\nPrevious attempt was over budget. Use cheaper ingredients and smaller unit counts while preserving variety.";
 
     const response = await client.responses.create({
-      model: process.env.OPENAI_WORKFLOW_MODEL || "gpt-4.1-mini",
+      model: process.env.OPENAI_WORKFLOW_MODEL || "gpt-5-mini",
       input: [
         { role: "system", content: systemPrompt },
         {
