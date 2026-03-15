@@ -1,10 +1,12 @@
 import { Recipe, Product, RecipeCost, CostItem } from "./types";
+import { resolveProductIds } from "./productResolver";
 
 export function findCheapestProduct(
   productId: string,
   products: Product[]
 ): Product | null {
-  const matches = products.filter((p) => p.id === productId);
+  const ids = resolveProductIds(productId);
+  const matches = products.filter((p) => ids.includes(p.id));
   if (matches.length === 0) return null;
   return matches.reduce((a, b) =>
     a.price_per_100g < b.price_per_100g ? a : b

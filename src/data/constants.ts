@@ -26,6 +26,9 @@ export const CUISINE_LABELS = {
   western: "Western",
   indian: "Indian",
   mediterranean: "Mediterranean",
+  mexican: "Mexican",
+  japanese: "Japanese",
+  korean: "Korean",
 } as const;
 
 export const DIFFICULTY_LABELS = {

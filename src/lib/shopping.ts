@@ -1,4 +1,5 @@
 import { MealSlot, Product, ShoppingItem, ShoppingList } from "./types";
+import { resolveProductIds } from "./productResolver";
 
 export function buildShoppingList(
   slots: MealSlot[],
@@ -20,7 +21,8 @@ export function buildShoppingList(
   const colesItems: ShoppingItem[] = [];
 
   for (const [matchKey, quantityNeeded] of needed) {
-    const matching = products.filter((p) => p.id === matchKey);
+    const ids = resolveProductIds(matchKey);
+    const matching = products.filter((p) => ids.includes(p.id));
     if (matching.length === 0) continue;
 
     // Find cheapest option per store
