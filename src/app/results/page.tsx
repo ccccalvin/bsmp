@@ -105,7 +105,7 @@ function ResultsContent() {
               Regenerate
             </button>
             <Link
-              href="/wizard"
+              href={`/wizard?from=results&prefs=${prefsParam ?? ""}`}
               className="px-4 py-2 text-sm font-medium border border-border rounded-lg hover:bg-secondary transition-colors"
             >
               Edit Preferences
