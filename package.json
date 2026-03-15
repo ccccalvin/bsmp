@@ -13,11 +13,8 @@
     "openai": "^6.29.0",
     "react": "19.2.3",
     "react-dom": "19.2.3",
-<<<<<<< HEAD
+    "recharts": "^3.8.0",
     "zod": "^4.3.6"
-=======
-    "recharts": "^3.8.0"
->>>>>>> 096f36dc014658eb0549a4a0e8eff017e1077504
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
