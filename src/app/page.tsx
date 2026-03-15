@@ -46,6 +46,15 @@ export default function Home() {
           Get Started
         </Link>
 
+        <div>
+          <Link
+            href="/ingredients"
+            className="inline-block text-sm font-medium underline underline-offset-4 hover:text-primary transition-colors"
+          >
+            Browse ingredients dataset
+          </Link>
+        </div>
+
         <p className="text-xs text-muted">
           Supports Woolworths &amp; Coles &middot; 15+ curated recipes &middot; No
           sign-up required

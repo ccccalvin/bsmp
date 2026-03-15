@@ -12,7 +12,7 @@ import {
 import { generateMealPlan, swapMealInPlan } from "@/lib/planner";
 import { scoreAllRecipes } from "@/lib/scoring";
 import { buildShoppingList } from "@/lib/shopping";
-import { products } from "@/data/products";
+import { products } from "@/data/productsFromIngredients";
 import { recipes } from "@/data/recipes";
 
 export function useMealPlan(prefs: UserPreferences) {
