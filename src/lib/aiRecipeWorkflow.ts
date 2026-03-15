@@ -5,12 +5,21 @@ import path from "node:path";
 import { DAY_LABELS } from "@/data/constants";
 
 const IngredientSelectionSchema = z.object({
-  ingredients: z.array(z.string()).min(1),
+  ingredients: z.array(z.string().trim().min(1)).min(1),
 });
 
-const UnitsToBuySchema = z.coerce
-  .number()
-  .positive()
+const UnitsToBuySchema = z.preprocess((raw) => {
+  if (typeof raw === "number") {
+    return Number.isFinite(raw) ? raw : 0.1;
+  }
+
+  if (typeof raw === "string") {
+    const parsed = Number(raw.trim());
+    return Number.isFinite(parsed) ? parsed : 0.1;
+  }
+
+  return 0.1;
+}, z.number().finite())
   .transform((value) => Number(Math.max(0.1, value).toFixed(2)));
 
 const WeeklyPlanSchema = z.object({
@@ -147,6 +156,59 @@ async function loadIngredients(): Promise<IngredientRecord[]> {
   return Array.from(byName.values());
 }
 
+function normalizeTerm(value: string): string {
+  return value.toLowerCase().replace(/[^a-z0-9\s]/g, " ").replace(/\s+/g, " ").trim();
+}
+
+function buildCheapestIngredientPool(
+  ingredients: IngredientRecord[],
+  requested: string[],
+  maxPerRequest = 5,
+  fallbackCount = 25
+): IngredientRecord[] {
+  const dedupedRequests = Array.from(
+    new Set(requested.map((item) => item.trim()).filter(Boolean))
+  ).slice(0, 20);
+
+  const poolByName = new Map<string, IngredientRecord>();
+
+  for (const request of dedupedRequests) {
+    const normalizedRequest = normalizeTerm(request);
+    if (!normalizedRequest) continue;
+
+    const tokens = normalizedRequest.split(" ").filter((token) => token.length >= 3);
+
+    const matches = ingredients
+      .filter((ingredient) => {
+        const name = normalizeTerm(ingredient.name);
+
+        if (name.includes(normalizedRequest)) {
+          return true;
+        }
+
+        if (tokens.length > 0) {
+          return tokens.every((token) => name.includes(token));
+        }
+
+        return false;
+      })
+      .sort((a, b) => a.price - b.price)
+      .slice(0, maxPerRequest);
+
+    for (const match of matches) {
+      if (!poolByName.has(match.name)) {
+        poolByName.set(match.name, match);
+      }
+    }
+  }
+
+  if (poolByName.size > 0) {
+    return Array.from(poolByName.values()).sort((a, b) => a.price - b.price);
+  }
+
+  return [...ingredients].sort((a, b) => a.price - b.price).slice(0, fallbackCount);
+}
+
 function buildWorkflowPrompt(input: WorkflowRequest): string {
   return [
     `User request: ${input.request || "Create a tasty weekly meal plan"}`,
@@ -163,27 +225,22 @@ function buildWorkflowPrompt(input: WorkflowRequest): string {
 
 async function runIngredientAgent(
   client: OpenAI,
-  workflowText: string,
-  ingredients: IngredientRecord[]
+  workflowText: string
 ): Promise<IngredientSelection> {
-  const ingredientCatalog = ingredients
-    .map((i) => `${i.name} | $${i.price.toFixed(2)} | unit ${i.unit}`)
-    .join("\n");
-
   const response = await client.responses.create({
     model: process.env.OPENAI_WORKFLOW_MODEL || "gpt-5-mini",
     input: [
       {
         role: "system",
         content:
-          "You are IngredientSelector. Return JSON only: {\"ingredients\": [string]}. Select practical ingredient names from the catalog to support a full week plan. Ignore budget in this step.",
+          "You are IngredientPlanner. Return JSON only: {\"ingredients\": [string]}. Provide 8-12 practical ingredient search terms needed for the requested meal plan. Do not include explanations.",
       },
       {
         role: "user",
         content: [
           {
             type: "input_text",
-            text: `${workflowText}\n\nAvailable ingredients catalog:\n${ingredientCatalog}`,
+            text: workflowText,
           },
         ],
       },
@@ -276,21 +333,22 @@ export async function runAiRecipeWorkflow(rawInput: unknown) {
   const client = new OpenAI({ apiKey: mustGetApiKey() });
   const workflowText = buildWorkflowPrompt(input);
 
-  const selectedByAgent = await runIngredientAgent(client, workflowText, ingredients);
-  const selectedSet = new Set(selectedByAgent.ingredients.map((name) => name.trim()));
-
-  const selectedIngredients = ingredients.filter((ingredient) => selectedSet.has(ingredient.name));
-  const fallbackIngredients =
-    selectedIngredients.length > 0 ? selectedIngredients : ingredients.slice(0, 80);
+  const selectedByAgent = await runIngredientAgent(client, workflowText);
+  const cheapestCandidateIngredients = buildCheapestIngredientPool(
+    ingredients,
+    selectedByAgent.ingredients,
+    5,
+    25
+  );
 
   const weeklyDraft = await runWeeklyPlanAgent(
     client,
     workflowText,
     input.numDays,
     input.budget,
-    fallbackIngredients
+    cheapestCandidateIngredients
   );
-  const ingredientLookup = new Map(fallbackIngredients.map((i) => [i.name, i]));
+  const ingredientLookup = new Map(cheapestCandidateIngredients.map((i) => [i.name, i]));
 
   const mealEntries = weeklyDraft.meals
     .filter((meal) => meal.day >= 0 && meal.day < input.numDays)
