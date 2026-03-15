@@ -22,7 +22,7 @@ export interface Product {
 
 // ---- Recipe ----
 
-export type Cuisine = "asian" | "western" | "indian" | "mediterranean";
+export type Cuisine = "asian" | "western" | "indian" | "mediterranean" | "mexican" | "japanese" | "korean";
 export type Difficulty = "very_easy" | "medium";
 export type MealType = "breakfast" | "lunch" | "dinner";
 export type RecipeTag =

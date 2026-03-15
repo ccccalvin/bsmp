@@ -26,9 +26,19 @@ export const CUISINE_LABELS = {
   western: "Western",
   indian: "Indian",
   mediterranean: "Mediterranean",
+  mexican: "Mexican",
+  japanese: "Japanese",
+  korean: "Korean",
 } as const;
 
 export const DIFFICULTY_LABELS = {
   very_easy: "Very Easy",
   medium: "Medium",
+} as const;
+
+export const DAILY_MACRO_TARGETS = {
+  protein: 50,
+  carbs: 250,
+  fat: 65,
+  calories: 2000,
 } as const;
